@@ -53,6 +53,21 @@ export class SettingsTab extends PluginSettingTab {
 				name: t("settings.showDashboardOnStartup.name"),
 				control: { type: "toggle", key: "showDashboardOnStartup" },
 			},
+			{
+				name: "HTTP API / MCP",
+				desc: "在 127.0.0.1 上暴露 OKR 工具，供 MCP 客户端调用。仅桌面端可用。",
+				control: { type: "toggle", key: "enableMCP" },
+			},
+			{
+				name: "MCP 端口",
+				desc: "默认 8090，需与客户端配置一致。",
+				control: { type: "text", key: "mcpPort", placeholder: "8090" },
+			},
+			{
+				name: "MCP Token",
+				desc: "客户端需发送 Authorization: Bearer <token>。留空则启动时自动生成。",
+				control: { type: "text", key: "mcpAuthToken", placeholder: "留空自动生成" },
+			},
 		];
 	}
 
@@ -83,13 +98,32 @@ export class SettingsTab extends PluginSettingTab {
 				break;
 			case "autoComputeProgress":
 			case "showDashboardOnStartup":
+			case "enableMCP":
 				if (typeof value !== "boolean") {
 					return;
 				}
 				this.plugin.settings[key] = value;
 				break;
+			case "mcpPort": {
+				const port = Number(value);
+				if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+					return;
+				}
+				this.plugin.settings.mcpPort = port;
+				break;
+			}
+			case "mcpAuthToken":
+				if (typeof value !== "string") {
+					return;
+				}
+				this.plugin.settings.mcpAuthToken = value.trim();
+				break;
 		}
 		await this.plugin.saveSettings();
+		// 端口、Token、开关变化后重建服务
+		if (key === "enableMCP" || key === "mcpPort" || key === "mcpAuthToken") {
+			await this.plugin.restartMCP();
+		}
 	}
 
 	display(): void {
@@ -158,6 +192,9 @@ export class SettingsTab extends PluginSettingTab {
 			"defaultPeriodType",
 			"autoComputeProgress",
 			"showDashboardOnStartup",
+			"enableMCP",
+			"mcpPort",
+			"mcpAuthToken",
 		].includes(key);
 	}
 

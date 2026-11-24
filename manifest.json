@@ -1,10 +1,10 @@
 {
 	"id": "vault-okr-manager",
 	"name": "Vault OKR Manager",
-	"version": "1.5.0",
+	"version": "1.5.1",
 	"minAppVersion": "1.7.2",
-	"description": "Manage weighted OKRs, health signals, check-ins, and structured reviews inside your vault.",
+	"description": "Manage weighted OKRs, health signals, check-ins, and structured reviews inside your vault. Fork adds an MCP server.",
 	"author": "jingmengzhiyue",
 	"authorUrl": "https://github.com/jingmengzhiyue",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }

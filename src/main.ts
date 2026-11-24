@@ -10,11 +10,14 @@ import { PeriodReviewsModal } from "./modals/PeriodReviewsModal";
 import { SettingsTab } from "./settings/SettingsTab";
 import { createI18n, detectLocale, type I18n } from "./i18n";
 import { revealLeafCompat } from "./utils/workspace";
+import { OKRMCPService } from "./mcp/OKRMCPService";
+import { MCPHttpServer } from "./mcp/MCPHttpServer";
 
 export default class OKRPlugin extends Plugin {
 	settings!: OKRPluginSettings;
 	manager!: OKRManager;
 	i18n!: I18n;
+	private mcpServer: MCPHttpServer | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -113,6 +116,59 @@ export default class OKRPlugin extends Plugin {
 				void this.activateDashboard();
 			});
 		}
+
+		// MCP 服务：仅桌面端，默认关闭
+		if (this.settings.enableMCP) {
+			if (!this.settings.mcpAuthToken) {
+				this.settings.mcpAuthToken = generateToken();
+				await this.saveSettings();
+			}
+			this.app.workspace.onLayoutReady(() => {
+				void this.startMCP();
+			});
+		}
+	}
+
+	async onunload(): Promise<void> {
+		await this.stopMCP();
+	}
+
+	/** (Re)start the MCP server against the current settings. */
+	async restartMCP(): Promise<void> {
+		await this.stopMCP();
+		if (this.settings.enableMCP) {
+			await this.startMCP();
+		}
+	}
+
+	private async startMCP(): Promise<void> {
+		if (this.mcpServer || !this.settings.enableMCP) return;
+		const service = new OKRMCPService(
+			this.manager,
+			this.settings,
+			this.manifest.version,
+		);
+		const server = new MCPHttpServer(service, {
+			port: this.settings.mcpPort,
+			token: this.settings.mcpAuthToken,
+		});
+		try {
+			await server.start();
+			this.mcpServer = server;
+			new Notice(
+				`OKR MCP 已启动: http://127.0.0.1:${this.settings.mcpPort}/mcp`,
+			);
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
+			console.error("[okr-mcp] 启动失败", error);
+			new Notice(`OKR MCP 启动失败: ${message}`);
+		}
+	}
+
+	private async stopMCP(): Promise<void> {
+		const server = this.mcpServer;
+		this.mcpServer = null;
+		if (server) await server.stop();
 	}
 
 	async activateDashboard(): Promise<void> {
@@ -181,4 +237,10 @@ export default class OKRPlugin extends Plugin {
 		await this.saveData(this.settings);
 		this.manager.updateSettings(this.settings);
 	}
+}
+
+function generateToken(): string {
+	const bytes = new Uint8Array(24);
+	crypto.getRandomValues(bytes);
+	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }

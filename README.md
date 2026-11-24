@@ -232,6 +232,26 @@ Do not remove managed markers unless you intend to repair the file manually. Ord
 
 Additional lifecycle, template, review, edit, delete, reorder, and postpone actions are available from the dashboard and Objective detail view.
 
+## MCP server (fork addition)
+
+This fork serves objectives and key results over MCP using the Streamable HTTP transport in stateless mode. Every tool calls `OKRManager`, so the plugin's period locks, cache invalidation, and file format stay authoritative.
+
+Enable it under **Settings → OKR → HTTP API / MCP**. The default port is `8090`. When the token field is empty, a token is generated at startup and saved; clients must send `Authorization: Bearer <token>`.
+
+| Tool | Purpose |
+| --- | --- |
+| `okr_list_periods` | Periods with objective counts |
+| `okr_list_objectives` | Objectives and key results for a period |
+| `okr_get_objective` | One objective with full key result detail |
+| `okr_create_objective` | Create an objective, optionally with key results |
+| `okr_update_objective` | Update title, description, owner, status, or due date |
+| `okr_delete_objective` | Trash an objective (`confirm: true`) |
+| `okr_add_key_result` | Add a key result; the id is assigned for you |
+| `okr_update_key_result` | Update a key result; changing `current`/`target` recomputes progress |
+| `okr_delete_key_result` | Remove a key result and its check-ins (`confirm: true`) |
+
+Task management is deliberately out of scope: use TaskNotes for tasks and link them to an objective through the `projects` field. The server relies on Node's `http` module, so this fork is desktop-only.
+
 ## Compatibility and upgrades
 
 - Version 1.4.0 reads 1.3.x Objective files without migration. Missing KR weights default to `1`; active blocker state is derived from the latest check-in when the field is absent.

@@ -31,7 +31,9 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
-		...builtinModules],
+		...builtinModules,
+		// MCP 传输层使用带 node: 前缀的导入
+		"node:*"],
 	format: "cjs",
 	target: "es2018",
 	logLevel: "info",

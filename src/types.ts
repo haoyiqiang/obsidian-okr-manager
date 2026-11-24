@@ -245,6 +245,10 @@ export interface OKRPluginSettings {
 	defaultPeriodType: OKRPeriodType;
 	autoComputeProgress: boolean;
 	showDashboardOnStartup: boolean;
+	// MCP server over Streamable HTTP (desktop only, off by default)
+	enableMCP: boolean;
+	mcpPort: number;
+	mcpAuthToken: string;
 }
 
 export const DEFAULT_SETTINGS: OKRPluginSettings = {
@@ -252,4 +256,7 @@ export const DEFAULT_SETTINGS: OKRPluginSettings = {
 	defaultPeriodType: "quarter",
 	autoComputeProgress: true,
 	showDashboardOnStartup: false,
+	enableMCP: false,
+	mcpPort: 8090,
+	mcpAuthToken: "",
 };
